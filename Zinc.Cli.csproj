@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Target the LTS and roll forward, so the tool runs on whichever .NET 10+ runtime the user has.
+         Tools don't roll forward across major versions by default. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>zinc</AssemblyName>
+    <RootNamespace>Zinc.Cli</RootNamespace>
+
+    <!-- `dnx zinc ...` runs it one-shot; `dotnet tool install zinc` pins it in a project. -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>zinc</ToolCommandName>
+    <PackageId>zinc</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>zinc-framework</Authors>
+    <Description>Command line tool for the Zinc game framework: create projects and package games for release.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/zinc-framework/Zinc.Cli</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath>artifacts</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.10.5" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.56.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
