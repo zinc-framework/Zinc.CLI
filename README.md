@@ -66,6 +66,16 @@ Then `zinc package mac --sign --notarize my-profile`.
 
 ```
 dotnet run -- doctor                      # run from source
-dotnet pack -c Release                    # artifacts/zinc.<version>.nupkg
-dnx zinc@<version> --add-source ./artifacts --yes -- doctor
+dotnet pack -c Release                    # artifacts/zinc.0.0.0-local.nupkg
+dnx zinc@0.0.0-local --add-source ./artifacts --yes -- doctor
 ```
+
+## Releasing
+
+Push a version tag; the version comes from the tag, not the `.csproj`:
+
+```
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+`.github/workflows/publish.yml` packs that version and publishes it to nuget.org through Trusted Publishing, so no API key is stored anywhere.

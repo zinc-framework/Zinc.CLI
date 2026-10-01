@@ -15,11 +15,15 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>zinc</ToolCommandName>
     <PackageId>zinc</PackageId>
-    <Version>0.1.0</Version>
+    <!-- Release versions come from the git tag: pushing vX.Y.Z publishes X.Y.Z (see
+         .github/workflows/publish.yml). This only names packages from local builds. -->
+    <Version>0.0.0-local</Version>
     <Authors>zinc-framework</Authors>
     <Description>Command line tool for the Zinc game framework: create projects and package games for release.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/zinc-framework/Zinc.Cli</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/zinc-framework/Zinc.CLI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/zinc-framework/Zinc.CLI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageOutputPath>artifacts</PackageOutputPath>
   </PropertyGroup>
