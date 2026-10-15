@@ -31,6 +31,19 @@ zinc always runs `dotnet publish` itself (Release, self-contained, single-file, 
 
 In the bundle, the executable and native libraries go in `Contents/MacOS` and everything else (`res/`, `data/`) in `Contents/Resources`, where Zinc looks for content when it runs from a bundle.
 
+### `zinc package windows`
+
+Publishes the game for `win-x64` and packages it as `dist/windows/<App>/`, plus `dist/windows/<App>-windows.zip` holding that folder.
+
+```
+zinc package windows                              # the folder to upload as a Steam depot, and a zip of it
+zinc package windows -- -p:PublishSingleFile=false
+```
+
+It publishes the same way as on macOS (`--from`, `--project`, `-o` and `--` work the same), and also single-file by default. That isn't required on Windows, but it leaves players with the `.exe`, the native libraries and the game's content instead of a few hundred assemblies. The folder is the publish as it is, since Zinc finds content next to the executable on Windows.
+
+The `.exe` gets its icon from `ZincAppIcon`, which zinc turns into an `.ico` before publishing because the SDK builds the icon into the executable. A game that sets its own `<ApplicationIcon>` keeps it. The SDK only adds the icon and version info when it builds on Windows, so package on Windows. The `.exe` isn't code signed: installs through Steam don't need it, but SmartScreen warns about an unsigned executable downloaded from the web.
+
 ### `zinc doctor`
 
 Checks the machine and project: .NET SDK, git, Xcode tools, signing identities, the project's packaging settings. `--notary-profile <name>` also checks notarization credentials. Lists how to fix whatever's missing.

@@ -32,6 +32,8 @@
     <PackageReference Include="CliWrap" Version="3.10.5" />
     <PackageReference Include="Spectre.Console" Version="0.57.2" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.56.1" />
+    <!-- Windows only, for making the .exe's icon: `zinc package windows` only does that on Windows. -->
+    <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>

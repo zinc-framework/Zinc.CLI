@@ -21,6 +21,8 @@ app.Configure(config =>
             .WithExample("package", "mac")
             .WithExample("package", "mac", "--sign", "--notarize", "my-profile")
             .WithExample("package", "mac", "--", "-p:DefineConstants=DEMO");
+        package.AddCommand<PackageWindowsCommand>("windows")
+            .WithExample("package", "windows");
     });
 
     config.AddCommand<DoctorCommand>("doctor");
