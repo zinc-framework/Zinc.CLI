@@ -14,16 +14,7 @@ namespace Zinc.Cli.Packaging;
 static partial class MacBundler
 {
     // The hardened runtime (required for notarization) blocks JIT by default; .NET needs it.
-    const string Entitlements = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>com.apple.security.cs.allow-jit</key>
-            <true/>
-        </dict>
-        </plist>
-        """;
+    const string AllowJit = "com.apple.security.cs.allow-jit";
 
     public static async Task<string> AssembleAsync(PublishManifest manifest, string publishDir, string outputDir, string workDir, CancellationToken ct)
     {
@@ -76,7 +67,9 @@ static partial class MacBundler
         else
         {
             var entitlements = Path.Combine(workDir, "entitlements.plist");
-            await File.WriteAllTextAsync(entitlements, Entitlements, ct);
+            await File.WriteAllTextAsync(entitlements, EntitlementsPlist(manifest), ct);
+            foreach (var entitlement in manifest.Entitlements.Distinct().Where(e => e != AllowJit))
+                Ui.Info($"with {entitlement}");
             await Run.Tool("codesign", [.. common, "--entitlements", entitlements, app], "Signing the app", ct);
         }
 
@@ -197,6 +190,22 @@ static partial class MacBundler
         Add("CFBundleShortVersionString", version);
         Add("CFBundleVersion", version);
         lines.AddRange(["    <key>NSHighResolutionCapable</key>", "    <true/>", "</dict>", "</plist>", ""]);
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>allow-jit, plus the game's ZincEntitlement items, each set true.</summary>
+    static string EntitlementsPlist(PublishManifest manifest)
+    {
+        List<string> lines =
+        [
+            """<?xml version="1.0" encoding="UTF-8"?>""",
+            """<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">""",
+            """<plist version="1.0">""",
+            "<dict>",
+        ];
+        foreach (var entitlement in manifest.Entitlements.Prepend(AllowJit).Distinct())
+            lines.AddRange([$"    <key>{SecurityElement.Escape(entitlement)}</key>", "    <true/>"]);
+        lines.AddRange(["</dict>", "</plist>", ""]);
         return string.Join('\n', lines);
     }
 

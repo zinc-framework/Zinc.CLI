@@ -19,10 +19,11 @@ sealed record PublishManifest(
     string[] Native,
     string AppName,
     string BundleId,
-    string Icon)
+    string Icon,
+    string[] Entitlements)
 {
     public const string FileName = "zinc.publish.json";
-    const int SupportedSchema = 1;
+    const int SupportedSchema = 2;
 
     static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
@@ -50,6 +51,9 @@ sealed record PublishManifest(
         if (manifest.Schema > SupportedSchema)
             throw new ZincException($"{Ui.Path(path)} was written by a newer Zinc (schema {manifest.Schema}) than this zinc understands.",
                 "Update the zinc tool.");
+        if (manifest.Schema < SupportedSchema)
+            throw new ZincException($"{Ui.Path(path)} was written by an older Zinc (schema {manifest.Schema}) than this zinc understands.",
+                "Update the game's Zinc (the submodule).");
         return manifest;
     }
 

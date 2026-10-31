@@ -59,8 +59,21 @@ zinc reads packaging settings from the game's `.csproj`, through the `zinc.publi
   <ZincAppIcon>res/icon.png</ZincAppIcon>            <!-- relative to the publish folder -->
 </PropertyGroup>
 
+<ItemGroup>
+  <!-- macOS: entitlements beyond allow-jit, for a signed app (see below) -->
+  <ZincEntitlement Include="com.apple.security.cs.disable-library-validation" />
+</ItemGroup>
+
 <Import Project="..\Zinc\Zinc.Publish.targets" />
 ```
+
+The manifest has a `schema` number, and zinc only packages the one it understands: if it says to update zinc or the game's Zinc, the two are out of step.
+
+### Entitlements
+
+A signed app runs under the hardened runtime, which notarization requires. zinc gives it `com.apple.security.cs.allow-jit`, since .NET needs it, plus each `ZincEntitlement`, set true. An ad-hoc signed app has no hardened runtime, so none of this applies to it, which also means something that works ad-hoc can still fail once signed.
+
+The usual one is `com.apple.security.cs.disable-library-validation`: the hardened runtime only loads libraries signed by Apple or by the app's own team, so a library that loads another developer's code at runtime fails without it. Steamworks is one: `libsteam_api.dylib` loads `steamclient.dylib` from the player's Steam install, signed by Valve, and `SteamAPI_Init` fails. The Steam overlay also needs `com.apple.security.cs.allow-dyld-environment-variables`, since Steam injects it with `DYLD_INSERT_LIBRARIES`.
 
 ## Signing and notarizing on macOS
 
