@@ -31,6 +31,8 @@ zinc always runs `dotnet publish` itself (Release, self-contained, single-file, 
 
 In the bundle, the executable and native libraries go in `Contents/MacOS` and everything else (`res/`, `data/`) in `Contents/Resources`, where Zinc looks for content when it runs from a bundle.
 
+`Info.plist`'s `LSMinimumSystemVersion` is the newest minimum macOS (`minos`) among the bundle's binaries, as `otool -l` reports it, since macOS won't load any of them on an older one. With the key there, an older Mac says which macOS the app needs instead of the app failing to launch. The .NET runtime sets the floor (macOS 14 for .NET 11) unless a native library needs newer, and zinc prints which version it found.
+
 ### `zinc package windows`
 
 Publishes the game for `win-x64` and packages it as `dist/windows/<App>/`, plus `dist/windows/<App>-windows.zip` holding that folder.

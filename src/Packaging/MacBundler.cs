@@ -37,7 +37,10 @@ static partial class MacBundler
         }
 
         var hasIcon = await BuildIconAsync(manifest, publishDir, resources, workDir, ct);
-        await File.WriteAllTextAsync(Path.Combine(contents, "Info.plist"), InfoPlist(manifest, hasIcon), ct);
+        var minimumSystemVersion = await MinimumSystemVersionAsync(macOS, manifest, ct);
+        if (minimumSystemVersion != null) Ui.Info($"needs macOS {minimumSystemVersion} or later");
+        else Ui.Warn("No binary in the bundle says which macOS it needs, so Info.plist has no LSMinimumSystemVersion.");
+        await File.WriteAllTextAsync(Path.Combine(contents, "Info.plist"), InfoPlist(manifest, hasIcon, minimumSystemVersion), ct);
         return app;
     }
 
@@ -166,7 +169,29 @@ static partial class MacBundler
         }
     }
 
-    static string InfoPlist(PublishManifest manifest, bool hasIcon)
+    /// <summary>
+    /// The newest minos among the bundle's code, for LSMinimumSystemVersion. dyld won't load a binary
+    /// built for a newer macOS than the one running, so the app needs at least that, and with the key
+    /// macOS says which version it needs rather than the app failing at launch. Null when no binary
+    /// has one.
+    /// </summary>
+    static async Task<string?> MinimumSystemVersionAsync(string macOS, PublishManifest manifest, CancellationToken ct)
+    {
+        // A universal binary (Steam's dylib, say) has a minos per architecture; only the one the app runs as counts.
+        var arch = manifest.RuntimeIdentifier.EndsWith("-x64", StringComparison.OrdinalIgnoreCase) ? "x86_64" : "arm64";
+        Version? newest = null;
+        foreach (var file in Directory.EnumerateFiles(macOS, "*", SearchOption.AllDirectories).Where(IsMachO))
+        {
+            // LC_BUILD_VERSION's minos. Binaries old enough to carry LC_VERSION_MIN_MACOSX instead predate
+            // any macOS .NET runs on, so they never raise the floor.
+            var otool = await Run.Query("otool", ["-arch", arch, "-l", file], ct);
+            foreach (Match m in MinOs().Matches(otool.StdOut))
+                if (Version.TryParse(m.Groups[1].Value, out var v) && (newest == null || v > newest)) newest = v;
+        }
+        return newest?.ToString();
+    }
+
+    static string InfoPlist(PublishManifest manifest, bool hasIcon, string? minimumSystemVersion)
     {
         var bundleId = string.IsNullOrEmpty(manifest.BundleId) ? LocalBundleId(manifest.AppName) : manifest.BundleId;
         // CFBundleShortVersionString must be up to three dot-separated integers: drop any prerelease or build suffix.
@@ -189,6 +214,7 @@ static partial class MacBundler
         Add("CFBundlePackageType", "APPL");
         Add("CFBundleShortVersionString", version);
         Add("CFBundleVersion", version);
+        if (minimumSystemVersion != null) Add("LSMinimumSystemVersion", minimumSystemVersion);
         lines.AddRange(["    <key>NSHighResolutionCapable</key>", "    <true/>", "</dict>", "</plist>", ""]);
         return string.Join('\n', lines);
     }
@@ -235,6 +261,10 @@ static partial class MacBundler
 
     [GeneratedRegex(@"^\d+(\.\d+){0,2}")]
     private static partial Regex LeadingVersion();
+
+    // otool -l prints LC_BUILD_VERSION's minos as "    minos 14.0" on a line of its own
+    [GeneratedRegex(@"^\s*minos\s+(\d+(?:\.\d+){1,2})\s*$", RegexOptions.Multiline)]
+    private static partial Regex MinOs();
 
     [GeneratedRegex(@"[^A-Za-z0-9.-]")]
     private static partial Regex InvalidBundleIdChars();
